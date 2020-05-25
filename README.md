@@ -10,14 +10,14 @@
 - Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` or `.xml`
 
 ## Process Flow 
-1.) Create Database + Table Schema 
-2.) Populate Tables with Data 
-3.) Run ETL Script
+- 1.) Create Database + Table Schema 
+- 2.) Populate Tables with Data 
+- 3.) Run ETL Script
     - Be restartable if the jobs or subjob fails
     - Support update/insert (UPSERT) execution
     - Handle erroneous data
     - Track data processing metadata (when did the load start, break, finish)
-4.) Analyze Output
+- 4.) Analyze Output
 
 ## Setting up Conda Environment 
 *Note*: When using VS Code ensure your python interpreter is set to your conda python interpreter 
