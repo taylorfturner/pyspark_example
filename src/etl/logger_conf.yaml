@@ -1,0 +1,27 @@
+version: 1
+
+formatters:
+  simple:
+    format: "%(asctime)s %(name)s: %(message)s"
+  extended:
+    format: "%(asctime)s %(name)s -- %(levelname)s in %(funcName)s: %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: NOTSET
+    formatter: simple
+
+  file_handler:
+    class: logging.FileHandler
+    level: NOTSET
+    filename: test.log
+    formatter: extended
+
+loggers:
+  etl:
+    handlers: [console, file_handler]
+  test:
+    handlers: [file_handler]
+root:
+  handlers: [file_handler]

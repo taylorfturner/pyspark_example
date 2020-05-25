@@ -1,0 +1,7 @@
+pyspark==2.4.5
+faker==4.1.0
+sqlalchemy
+pandas 
+numpy
+pymysql
+pyyaml
