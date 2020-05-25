@@ -6,3 +6,4 @@ data/reseller_csv/*
 data/reseller_xml/*
 *test.log*
 *example_pyspark.py*
+*peaking.csv*
