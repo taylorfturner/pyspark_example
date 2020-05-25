@@ -9,7 +9,7 @@
 - `mysql-connector-java-5.1.49` is in the root of your `C:\` drive. See [here](https://dev.mysql.com/downloads/connector/j/5.1.html) for download. 
 - Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` and `.xml`
 
-##API Clarification 
+## API Clarification 
 ```
 etl = ETL()
 df = etl.get() 
