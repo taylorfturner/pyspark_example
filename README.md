@@ -7,7 +7,7 @@
 - Working in a conda environment. See [Setting Up Conda environment](#setting_up_conda_environment)
 - Working with dummy data. See `src/gen_data` for script.
 - `mysql-connector-java-5.1.49` is in the root of your `C:\` drive. See [here](https://dev.mysql.com/downloads/connector/j/5.1.html) for download. 
-- Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` or `.xml`
+- Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` and `.xml`
 
 ## Process Flow 
 - 1.) Create Database + Table Schema 
