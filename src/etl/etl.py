@@ -153,13 +153,11 @@ class ETL(object):
             `get()` method. 
         """
         try:
-            #TODO: setup class path -- .config('spark.driver.extraClassPath', 'testing')\ 
-            session = SparkSession\
-                    .builder\
-                    .appName("toptal_sales")\
-                    .config("spark.executor.extraClassPath", "mysql-connector-java-5.1.49")\
-                    .config("spark.driver.extraClassPath", "mysql-connector-java-5.1.49")\
-                    .getOrCreate()
+            
+            spark = SparkSession\
+                .builder\
+                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
+                .getOrCreate()
 
             sc = session.sparkContext
             sqlcontext = SQLContext(sc)
