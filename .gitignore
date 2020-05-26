@@ -9,3 +9,6 @@ data/reseller_xml/*
 src/etl/__*
 src/__*
 *.egg-info*
+toptal_src.egg_info
+dist*
+build*
