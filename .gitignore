@@ -12,3 +12,4 @@ src/__*
 toptal_src.egg_info
 dist*
 build*
+.vscode
