@@ -2,7 +2,6 @@ from decimal import Decimal
 import logging 
 import logging.config
 import os
-from pyspark import SparkConf
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from sqlalchemy import create_engine
@@ -107,9 +106,11 @@ class ETL():
         # self.logger.info('Data Processing Start // {}'.format(self.etl_id))
         self.logger.warn('NOT IMPLEMENTED')
         pass
-        #TODO: check for errorneous data values 
-        # check for erroneous data 
+
+        #TODO: 
+        # check for errorneous data values  
         # restartable if the job fails
+        # filter down rows that already exist in the target data
 
         """
         try: 
@@ -117,14 +118,16 @@ class ETL():
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
         """
-    def put(self): 
+    def put(self, df): 
         """Writes data to final CSV file and stops spark session. 
+
+        Arguments: 
+            df {SparkDataFrame}
         """
-        # repartition the file so that the output is one single file
         try: 
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
-            self.df.repartition(1)\
+            df.repartition(1)\
                 .write()\
                 .format('com.databricks.spark.csv')\
                 .save('output')
@@ -161,8 +164,7 @@ class ETL():
                 .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
                 .getOrCreate()
 
-            sc = session.sparkContext
-            sqlcontext = SQLContext(sc)
+            sqlcontext = SQLContext(spark)
 
             self.logger.info('Spark Session Instantiated // {}'.format(self.etl_id))
     
