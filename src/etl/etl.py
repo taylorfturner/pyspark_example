@@ -48,16 +48,21 @@ class ETL(object):
         
         try: 
 
-            sc = self.sqlcontext.sparkContext
-            sqlcontext = SQLContext(sc)
+                        db_host = "127.0.0.1"
+            db_port = 3306
+            table_name = "toptal_sales"
+            db_name = "hqc"
+            db_url = "jdbc:mysql://{}:{}/{}?useSSL=false".format(db_host, db_port, db_name)
 
-            #TODO: FIX THIS
-            db_df = sqlcontext.read.format("jdbc").options(
-                    url="jdbc:mysql://localhost:3306/hqc",
-                    dbtable = "toptal_sales",
-                    user="root",
-                    password="Texas!234").load()
-
+            options = {
+                "url": db_url,
+                "dbtable": table_name,
+                "user": "root",
+                "password": "password",
+                "driver": "com.mysql.jdbc.Driver",
+            }
+            
+            df = sqlcontext.read.format('jdbc').options(**options).load()
             csv_df = sqlcontext.read.csv('data\\reseller_csv\\*.csv')
 
             #TODO: put this in a good location
