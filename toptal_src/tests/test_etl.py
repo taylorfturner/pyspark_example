@@ -1,6 +1,8 @@
 import unittest
 from toptal_src.etl import ETL
 
+#TODO: finalize all tests for 80%+ coverage 
+
 class ToptalETLTesting(unittest.TestCase):
 
     def test_instantiation(self): 

@@ -3,12 +3,12 @@ import logging
 import logging.config
 import os
 from pyspark.sql import SparkSession, SQLContext
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from sqlalchemy import create_engine
+from utils import xml_schema
 import uuid
 import yaml
 
-class ETL(): 
+class ETL():
 
     def __init__(self):
         """Instantiate the class for processing Sales data.
@@ -21,9 +21,10 @@ class ETL():
         """
         self.logger = self._inst_logger()
         self.etl_id = self._inst_etl_id()
+        self.jdbc_params = self._inst_jdbc_params()
         
         try: 
-            self.sqlcontext = self._inst_context()
+            self.spark_session, self.sqlcontext = self._inst_context()
 
             self.logger.info('Class instantiation complete // {}'.format(self.etl_id))
 
@@ -43,45 +44,19 @@ class ETL():
         self.logger.info('Begin collecting the data // {}'.format(self.etl_id))
         
         try: 
-
-            db_host = "127.0.0.1"
-            db_port = 3306
-            table_name = "toptal_sales"
-            db_name = "hqc"
-            db_url = "jdbc:mysql://{}:{}/{}?useSSL=false".format(db_host, db_port, db_name)
-
-            options = {
-                "url": db_url,
-                "dbtable": table_name,
-                "user": "root",
-                "password": "password",
-                "driver": "com.mysql.jdbc.Driver",
-            }
             
-            df = sqlcontext.read.format('jdbc').options(**options).load()
-            csv_df = sqlcontext.read.csv('data\\reseller_csv\\*.csv')
+            #TODO: determine column names from each source required for reporting purposes
+            
+            # retrieve the data from the mysql table locally
+            db_df = self._get_mysql_data()
+            
+            # retrieve the data from 3rd party data vendor
+            csv_df = self._get_csv_data()
 
-            #TODO: put this in a good location
-            schema = StructType([
-                    StructField('date', IntegerType(), False),
-                    StructField('reseller_id', IntegerType(), False),
-                    StructField('transaction_id', StringType(), False),
-                    StructField('eventName', StringType(), False),
-                    StructField('numberOfPurchasedTickets', StringType(), False),
-                    StructField('totalAmount', StringType(), False),
-                    StructField('salesChannel', StringType(), False),
-                    StructField('officeLocation', StringType(), False),
-                    StructField('dateCreated', StringType(), False),
-                    StructField('officeLocation', StringType(), False),
-                    StructField('first_name', StringType(), False),
-                    StructField('last_name', StringType(), False)
-                ])
-
-            xml_df = sc.read.format("com.databricks.spark.xml")\
-                .option('rowTag', 'transaction')\
-                .load('data/reseller_xml/*.xml', schema = schema)
+            #TODO: XML data reading
 
             #TODO: left join all together --> df 
+            df = db_df.join(csv_df, how='outer')
 
             self.logger.info('Data Collection Complete // {}'.format(self.etl_id))
 
@@ -104,37 +79,37 @@ class ETL():
                 of the three disparate data sources for the ticket sales. 
         """
         # self.logger.info('Data Processing Start // {}'.format(self.etl_id))
-        self.logger.warn('NOT IMPLEMENTED')
-        pass
 
-        #TODO: 
-        # check for errorneous data values  
-        # restartable if the job fails
-        # filter down rows that already exist in the target data
-
-        """
         try: 
+            #TODO: 1.) check for errorneous data values using self.__eroneous_data_value_check()
+            #TODO: 2.) restartable if the job fails
+            #TODO: 3.) UPSERT (INSERT / UPDATE) // hash each row in the dataset to then check in future runs if the data exists
+            #   in the target data
+            
             self.logger.info('Data Processing Complete // {}'.format(self.etl_id))
+
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
-        """
-    def put(self, df): 
+        
+    def put(self, df):
         """Writes data to final CSV file and stops spark session. 
 
         Arguments: 
-            df {SparkDataFrame}
+            df[spark datafarme] -- spark dataframe that
         """
         try: 
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
-            df.repartition(1)\
-                .write()\
-                .format('com.databricks.spark.csv')\
-                .save('output')
+            options = self.jdbc_params
+            options.update({'dtable': 'toptal_final'})
+
+            df.write.format('jdbc').options(**options)\
+                .mode('overwrite')
+                .save()
 
             self.logger.info('Job complete // {}'.format(self.etl_id))
 
-            self.sqlcontext.stop()
+            self.spark_session.stop()
 
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
@@ -152,38 +127,34 @@ class ETL():
         return unique_job_id
 
     def _inst_context(self): 
-        """
-        Instantiate the spark session, spark_context, and sqlcontext. 
+        """Instantiate the spark session, spark_context, and sqlcontext. 
             Return the sqlcontext object for reading data in the 
             `get()` method. 
         """
         try:
-            
-            spark = SparkSession\
+            spark_session = SparkSession\
                 .builder\
                 .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
                 .getOrCreate()
 
-            sqlcontext = SQLContext(spark)
-
+            sqlcontext = SQLContext(spark_session)
             self.logger.info('Spark Session Instantiated // {}'.format(self.etl_id))
     
         except Exception as e: 
 
             self.logger.error(e)
 
-        return sqlcontext
+        return spark_session, sqlcontext
 
     def _inst_logger(self): 
-        """
-        Instantiate a logger and set the config for it.
+        """Instantiate a logger and set the config for it.
         
         Return: 
             - logger object
         """
         current_dir = os.getcwd()
 
-        with open(current_dir + '\\src\\etl\\logger_conf.yaml', 'r') as f:
+        with open(current_dir + '\\toptal_src\\etl\\logger_conf.yaml', 'r') as f:
             log_cfg = yaml.safe_load(f)
 
         logging.config.dictConfig(log_cfg)
@@ -192,3 +163,79 @@ class ETL():
         logger.setLevel('DEBUG')
 
         return logger
+
+    def _read_creds(self, ): 
+        """Retrieve all credentials and parameters required to instantiate 
+            the JDBC connection to localhost MySQL database. 
+        """
+        current_dir = os.getcwd()
+
+        with open(current_dir + '\\creds.yaml', 'r') as f:
+            db_con_info = yaml.safe_load(f)
+
+        return db_con_info['db_con_info']
+
+
+    def _get_mysql_data(self): 
+        """Hidden method for retrieving the mysql data for ticket sales.
+        """
+        try: 
+
+            self.logger.info('Begin mysql query // {}'.format(self.etl_id))
+
+            options = self._inst_jdbc_params()
+            options.update({'dtable': 'toptal_sales'})
+
+            db_df = self.sqlcontext.read.format('jdbc').options(**options).load()
+
+            self.logger.info('MySQL data retrieved // {}'.format(self.etl_id))
+
+            return db_df
+
+        except Exception as e: 
+
+            self.logger.error('Error retrieving data from mysql table {} // {}'.format(e, self.etl_id))
+
+    def _get_xml_data(self): 
+        #TODO: implement XML data prasing from --> 
+        #   https://github.com/q15928/python-snippets/blob/master/pyspark/parse-xml/xml-parse.py
+        pass
+
+    def _get_csv_data(self): 
+        return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
+
+    def _inst_jdbc_params(self):
+        """Hidden method for instantiating all the params for MySQL JDBC read operation. 
+
+        Returns:
+            options[dictionary] -- dictionary of parameters to pass to the pyspark JDBC 
+                read from MySQL. 
+        """
+        db_con_info = self._read_creds()
+
+        self.logger.warn('`useSSL` is set to `false` in the url for JDBC local testing')
+
+        db_url = "jdbc:mysql://{}:{}/{}?useSSL=false".format(db_con_info['db_host'],\
+                                                                db_con_info['db_port'],\
+                                                                db_con_info['db_name'])
+        options = {
+            "url": db_url,
+            "user": db_con_info['db_user'],
+            "password": db_con_info['db_password'],
+            "driver": "com.mysql.jdbc.Driver",
+        }
+
+        return options
+        
+    def _eroneous_data_value_check(self): 
+        """Check for erroneous data values in a given dataframe
+        """
+
+        #TODO: 1.) check for nan/ null values
+
+        pass
+
+
+
+etl = ETL()
+df = etl.get() 
