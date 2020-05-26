@@ -9,10 +9,7 @@ from sqlalchemy import create_engine
 import uuid
 import yaml
 
-class ETL(object): 
-    """Class for ETL processing of ticket sale data for TopTal 
-        technical interview challenge.
-    """
+class ETL(): 
 
     def __init__(self):
         """Instantiate the class for processing Sales data.
@@ -32,7 +29,7 @@ class ETL(object):
             self.logger.info('Class instantiation complete // {}'.format(self.etl_id))
 
         except Exception as e: 
-            self.logger.error('{} // {}'.format(e, self.etl_id)))
+            self.logger.error('{} // {}'.format(e, self.etl_id))
 
     def get(self): 
         """
@@ -48,7 +45,7 @@ class ETL(object):
         
         try: 
 
-                        db_host = "127.0.0.1"
+            db_host = "127.0.0.1"
             db_port = 3306
             table_name = "toptal_sales"
             db_name = "hqc"
@@ -128,9 +125,9 @@ class ETL(object):
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
             self.df.repartition(1)\
-                .write()\ # write to mysql database 
+                .write()\
                 .format('com.databricks.spark.csv')\
-                .save('output\')
+                .save('output')
 
             self.logger.info('Job complete // {}'.format(self.etl_id))
 
