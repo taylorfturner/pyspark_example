@@ -2,6 +2,7 @@ from decimal import Decimal
 import logging 
 import logging.config
 import os
+from pyspark import SparkConf
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from sqlalchemy import create_engine
@@ -53,7 +54,6 @@ class ETL(object):
             #TODO: FIX THIS
             db_df = sqlcontext.read.format("jdbc").options(
                     url="jdbc:mysql://localhost:3306/hqc",
-                    driver = "com.mysql.jdbc.Driver",
                     dbtable = "toptal_sales",
                     user="root",
                     password="Texas!234").load()
@@ -96,7 +96,7 @@ class ETL(object):
         Key functionalities: 
             - Check for erroneous data
             - Support Update/Insert
-            - be restartable if the job fails
+            - Restartable if the job fails
 
         Arguments:
             dataframe {Spark.DataFrame} -- Dataframe that is the result of a left join 
@@ -106,6 +106,8 @@ class ETL(object):
         self.logger.warn('NOT IMPLEMENTED')
         pass
         #TODO: check for errorneous data values 
+        # check for erroneous data 
+        # restartable if the job fails
 
         """
         try: 
@@ -155,8 +157,8 @@ class ETL(object):
             session = SparkSession\
                     .builder\
                     .appName("toptal_sales")\
-                    .config("spark.executor.extraClassPath", "C:\\mysql-connector-java-5.1.49")\
-                    .config("spark.driver.extraClassPath", "C:\\mysql-connector-java-5.1.49")\
+                    .config("spark.executor.extraClassPath", "mysql-connector-java-5.1.49")\
+                    .config("spark.driver.extraClassPath", "mysql-connector-java-5.1.49")\
                     .getOrCreate()
 
             sc = session.sparkContext
