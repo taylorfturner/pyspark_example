@@ -7,6 +7,15 @@
 - Working in a conda environment. See [Setting Up Conda environment](#setting_up_conda_environment)
 - Working with dummy data. See `src/gen_data` for script.
 - `mysql-connector-java-5.1.49` is in the root of your `C:\spark\jars\` drive. See [here](https://dev.mysql.com/downloads/connector/j/5.1.html) for download. This is key for the JDBC to pick up the `-bin.jar` file for the MySQL connection.
+- Must specify the location of the `.jar` file in the instantiation of the SparkSession. This is to ensure that the `SQLContext` inherits the necessary configurations for the `MySQL` database connection to `localhost`. See below example: 
+ 
+        spark = SparkSession\
+                .builder\
+                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
+                .getOrCreate()
+
+        sqlcontext = SQLContext(spark)
+        
 - Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` and `.xml`
 
 ## API Clarification 
