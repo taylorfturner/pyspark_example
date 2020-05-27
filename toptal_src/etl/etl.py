@@ -5,9 +5,10 @@ import os
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql import functions as F
 from sqlalchemy import create_engine
-from utils import xml_schema
+from utils import xml_schema, parse_xml_string, set_schema
 import uuid
 import yaml
+import xml.etree.ElementTree as ET
 
 class ETL():
 
@@ -114,7 +115,7 @@ class ETL():
         try: 
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
-            jdbc_params = self.jdbc_params
+            jdbc_params = self._inst_jdbc_params()
             jdbc_params['dbtable'] = 'toptal_final'
 
             df.write.format('jdbc').options(**jdbc_params)\
@@ -151,14 +152,15 @@ class ETL():
                 .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
                 .getOrCreate()
 
-            sqlcontext = SQLContext(spark_session)
+            sqlContext = SQLContext(sparkContext=spark_session.sparkContext,\
+                                    sparkSession=spark_session)
             self.logger.info('Spark Session Instantiated // {}'.format(self.etl_id))
     
         except Exception as e: 
 
             self.logger.error(e)
 
-        return spark_session, sqlcontext
+        return spark_session, sqlContext
 
     def _inst_logger(self): 
         """Instantiate a logger and set the config for it.
@@ -191,8 +193,6 @@ class ETL():
 
 
     def _get_mysql_data(self): 
-        """Hidden method for retrieving the mysql data for ticket sales.
-        """
         self.logger.info('Begin mysql query // {}'.format(self.etl_id))
 
         try: 
@@ -212,8 +212,9 @@ class ETL():
 
     def _get_xml_data(self): 
         file_rdd = self.sqlcontext.read.text('data/reseller_xml/*.xml', wholetext=True).rdd
-        records_rdd = file_rdd.flatMap(parse_xml)
-        df = records_rdd.toDF(my_schema)
+        records_rdd = file_rdd.flatMap(parse_xml_string)
+        dataframe_schema = set_schema()
+        df = records_rdd.toDF(dataframe_schema)
         return df
 
     def _get_csv_data(self): 

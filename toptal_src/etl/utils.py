@@ -1,24 +1,31 @@
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+import xml.etree.ElementTree as ET
 
-def parse_xml(rdd):
-    """
-    Read the xml string from rdd, parse and extract the elements,
-    then return a list of list.
-    """
-    results = []
-    root = ET.fromstring(rdd[0])
+def parse_xml_string(rdd): 
 
-    for b in root.findall('xml'):
-        rec = []
-        rec.append(b.attrib['id'])
-        for e in column_names:
-            if b.find(e) is None:
-                rec.append(None)
-                continue
-            value = b.find(e).text
-            rec.append(value)
-        results.append(rec)
-    return results
+	rec = []
+
+	tree = ET.fromstring(rdd[0])
+
+	for iter_xml in xml_string.getiterator(): 
+		
+		print (iter_xml, iter_xml.tag, iter_xml.text)
+
+		rec.append(iter_xml.text)
+
+	return rec
+
+def set_schema():
+    """
+    Define the schema for the DataFrame
+    """
+    schema_list = []
+    
+    for c in ['transaction_id', 'first_name', 'last_name', 'dateCreated', 'officeLocation', 'salesChannel', 'totalAmount', 'numberOfPurchasedTickets', 'eventName', 'date', 'reseller_id']:
+
+            schema_list.append(StructField(c, StringType(), True))
+    
+    return StructType(schema_list)
 
 xml_schema = StructType([
         StructField('date', IntegerType(), False),
