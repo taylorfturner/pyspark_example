@@ -1,4 +1,3 @@
-from decimal import Decimal
 import logging 
 import logging.config
 import os
@@ -48,22 +47,23 @@ class ETL():
         try: 
         
             db_df = self._get_mysql_data()
-            db_df = db_df.select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_rate'])\
-                        .withColumn("commission_amount", F.col('total_cost') * F.col('commission_rate'))
+            db_df = db_df.withColumn("commission_amount", F.col('total_cost') * F.col('commission_rate'))\
+                            .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])
             
             csv_df = self._get_csv_data()
             csv_df = csv_df.withColumnRenamed('total_amount', 'total_cost')\
                             .withColumnRenamed('num_tickets', 'ticket_quantity')\
                             .withColumnRenamed('office_location', 'reseller_location')\
-                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_rate'])\
-                            .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))
+                            .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))\
+                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])
 
             xml_df = self._get_xml_data()
             xml_df = xml_df.withColumnRenamed('dateCreated', 'created_date')\
                             .withColumnRenamed('numberOfPurchasedtickets', 'ticket_quantity')\
                             .withColumnRenamed('totalAmount', 'total_cost')\
-                            .withColumnRenamed('officeLocation', 'office_location')\
-                            .withColumn('commission_amount', F.col('total_cost') * .10)
+                            .withColumnRenamed('officeLocation', 'reseller_location')\
+                            .withColumn('commission_amount', F.col('total_cost') * .10)\
+                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])
     
             df = db_df.union(csv_df).union(xml_df)
 
@@ -149,7 +149,8 @@ class ETL():
         try:
             spark_session = SparkSession\
                 .builder\
-                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
+                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar")\
+                .config("spark.serializer", "org.apache.spark.serializer.JavaSerializer")\
                 .getOrCreate()
 
             sqlContext = SQLContext(sparkContext=spark_session.sparkContext,\
@@ -214,12 +215,16 @@ class ETL():
         file_rdd = self.sqlcontext.read.text('data/reseller_xml/*.xml', wholetext=True).rdd
         records_rdd = file_rdd.flatMap(parse_xml_string)
         dataframe_schema = set_schema()
-        #TODO: fix the below line of code so it runs correctly
         df = records_rdd.toDF(dataframe_schema)
         return df
 
     def _get_csv_data(self): 
-        return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
+        self.logger.info('Begin CSV data retrieval // {}'.format(self.etl_id))
+        
+        try: 
+            return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
+        except Exception as e: 
+            self.logger.error('Error retrieving data from CSV files {} // {}'.format(e, self.etl_id))
 
     def _inst_jdbc_params(self):
         """Hidden method for instantiating all the params for MySQL JDBC read operation. 
