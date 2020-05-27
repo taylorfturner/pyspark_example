@@ -103,7 +103,7 @@ class ETL():
 
             return df
 
-        except Exception as e: 
+        except Exception as e:
             self.logger.error('{} // {}'.format(e, self.etl_id))
         
     def put(self, df):
@@ -214,6 +214,7 @@ class ETL():
         file_rdd = self.sqlcontext.read.text('data/reseller_xml/*.xml', wholetext=True).rdd
         records_rdd = file_rdd.flatMap(parse_xml_string)
         dataframe_schema = set_schema()
+        #TODO: fix the below line of code so it runs correctly
         df = records_rdd.toDF(dataframe_schema)
         return df
 
@@ -246,7 +247,6 @@ class ETL():
     def _eroneous_data_value_check(self): 
         """Check for erroneous data values in a given dataframe
         """
-        #TODO: 4.) check for nan/ null values
         pass
 
 

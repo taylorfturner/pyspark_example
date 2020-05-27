@@ -1,7 +1,5 @@
 import unittest
-from toptal_src.etl import ETL
-
-#TODO: 80%+ coverage 
+from toptal_src.etl import ETL 
 
 class ToptalETLTesting(unittest.TestCase):
 
@@ -19,8 +17,6 @@ class ToptalETLTesting(unittest.TestCase):
         # instantiate the class
         etl = ETL()
 
-        # TODO: complete this 
-        # make sure all class attributes are as they should be
         self.assertIsInstance(etl.jdbc_params, dict)
         self.assertIsInstance(etl.etl_id, str)
         self.assertIsInstance(etl.logger, logger)
@@ -30,7 +26,6 @@ class ToptalETLTesting(unittest.TestCase):
     def test_etl_process(self): 
         """Run the complete process
         """
-        #TODO: complete this 
         etl = ETL() 
         df = etl.get() 
         df = etl.run(df)
