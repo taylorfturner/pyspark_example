@@ -18,7 +18,7 @@
         
 - Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` and `.xml`
 
-## API Clarification 
+## Running the ETL Process 
 ```
 etl = ETL()
 df = etl.get() 
@@ -39,6 +39,8 @@ etl.put(df)
 ## Setting up Conda Environment 
 *Note*: When using VS Code ensure your python interpreter is set to your conda python interpreter 
 for both regular code execution and for debugging purposes. 
+
+Working directory should be the root of this repo when running the following. 
 ```
 conda create -n toptal python=3.6
 conda activate toptal

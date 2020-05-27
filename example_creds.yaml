@@ -1,0 +1,6 @@
+db_con_info: 
+  db_host: "127.0.0.1"
+  db_port: "3306"
+  db_name: "dbname"
+  db_password: "password"
+  db_user: "username"

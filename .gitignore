@@ -1,4 +1,4 @@
-*creds.yaml*
+creds.yaml
 data*
 data/*
 data/reseller_csv/*
