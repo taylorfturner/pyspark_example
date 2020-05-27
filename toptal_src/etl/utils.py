@@ -11,18 +11,13 @@ def parse_xml(rdd):
     for b in root.findall('xml'):
         rec = []
         rec.append(b.attrib['id'])
-        for e in ELEMENTS_TO_EXTRAT:
+        for e in column_names:
             if b.find(e) is None:
                 rec.append(None)
                 continue
             value = b.find(e).text
-            if e == 'price':
-                value = float(value)
-            elif e == 'publish_date':
-                value = datetime.strptime(value, '%Y-%m-%d')
             rec.append(value)
         results.append(rec)
-
     return results
 
 xml_schema = StructType([

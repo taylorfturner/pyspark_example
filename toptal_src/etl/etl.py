@@ -58,8 +58,7 @@ class ETL():
                             .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))
 
             xml_df = self._get_xml_data()
-            xml_df = xml_df.select('')\
-                            .withColumnRenamed('dateCreated', 'created_date')\
+            xml_df = xml_df.withColumnRenamed('dateCreated', 'created_date')\
                             .withColumnRenamed('numberOfPurchasedtickets', 'ticket_quantity')\
                             .withColumnRenamed('totalAmount', 'total_cost')\
                             .withColumnRenamed('officeLocation', 'office_location')\
@@ -216,7 +215,6 @@ class ETL():
         records_rdd = file_rdd.flatMap(parse_xml)
         df = records_rdd.toDF(my_schema)
         return df
-
 
     def _get_csv_data(self): 
         return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
