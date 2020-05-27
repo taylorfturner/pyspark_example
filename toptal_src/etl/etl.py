@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os
 from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import functions as F
 from sqlalchemy import create_engine
 from utils import xml_schema
 import uuid
@@ -44,19 +45,31 @@ class ETL():
         self.logger.info('Begin collecting the data // {}'.format(self.etl_id))
         
         try: 
-            
-            #TODO: determine column names from each source required for reporting purposes
-            
-            # retrieve the data from the mysql table locally
+        
             db_df = self._get_mysql_data()
+            db_df = db_df.select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_rate'])\
+                        .withColumn("commission_amount", F.col('total_cost') * F.col('commission_rate'))
             
-            # retrieve the data from 3rd party data vendor
             csv_df = self._get_csv_data()
+            csv_df = csv_df.withColumnRenamed('total_amount', 'total_cost')\
+                            .withColumnRenamed('num_tickets', 'ticket_quantity')\
+                            .withColumnRenamed('office_location', 'reseller_location')\
+                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_rate'])\
+                            .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))
 
-            #TODO: XML data reading
+            xml_df = self._get_xml_data()
+            xml_df = xml_df.select('')\
+                            .withColumnRenamed('dateCreated', 'created_date')\
+                            .withColumnRenamed('numberOfPurchasedtickets', 'ticket_quantity')\
+                            .withColumnRenamed('totalAmount', 'total_cost')\
+                            .withColumnRenamed('officeLocation', 'office_location')\
+                            .withColumn('commission_amount', F.col('total_cost') * .10)
+    
+            df = db_df.union(csv_df).union(xml_df)
 
-            #TODO: left join all together --> df 
-            df = db_df.join(csv_df, how='outer')
+            db_df.unpersist()
+            csv_df.unpersist()
+            xml_df.unpersist()
 
             self.logger.info('Data Collection Complete // {}'.format(self.etl_id))
 
@@ -65,7 +78,7 @@ class ETL():
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
 
-    def run(self, dataframe): 
+    def run(self, df): 
         """ 
         Process and join the data as desired. 
 
@@ -75,10 +88,10 @@ class ETL():
             - Restartable if the job fails
 
         Arguments:
-            dataframe {Spark.DataFrame} -- Dataframe that is the result of a left join 
+            df {Spark.DataFrame} -- Dataframe that is the result of a left join 
                 of the three disparate data sources for the ticket sales. 
         """
-        # self.logger.info('Data Processing Start // {}'.format(self.etl_id))
+        self.logger.info('Data Processing Start // {}'.format(self.etl_id))
 
         try: 
             #TODO: 1.) check for errorneous data values using self.__eroneous_data_value_check()
@@ -87,6 +100,8 @@ class ETL():
             #   in the target data
             
             self.logger.info('Data Processing Complete // {}'.format(self.etl_id))
+
+            return df
 
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
@@ -100,11 +115,11 @@ class ETL():
         try: 
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
-            options = self.jdbc_params
-            options.update({'dtable': 'toptal_final'})
+            jdbc_params = self.jdbc_params
+            jdbc_params['dbtable'] = 'toptal_final'
 
-            df.write.format('jdbc').options(**options)\
-                .mode('overwrite')
+            df.write.format('jdbc').options(**jdbc_params)\
+                .mode('overwrite')\
                 .save()
 
             self.logger.info('Job complete // {}'.format(self.etl_id))
@@ -154,7 +169,7 @@ class ETL():
         """
         current_dir = os.getcwd()
 
-        with open(current_dir + '\\toptal_src\\etl\\logger_conf.yaml', 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), 'logger_conf.yaml'), 'r') as f:
             log_cfg = yaml.safe_load(f)
 
         logging.config.dictConfig(log_cfg)
@@ -179,14 +194,14 @@ class ETL():
     def _get_mysql_data(self): 
         """Hidden method for retrieving the mysql data for ticket sales.
         """
+        self.logger.info('Begin mysql query // {}'.format(self.etl_id))
+
         try: 
 
-            self.logger.info('Begin mysql query // {}'.format(self.etl_id))
+            jdbc_options = self._inst_jdbc_params()
+            jdbc_options['dbtable'] = 'toptal_sales'
 
-            options = self._inst_jdbc_params()
-            options.update({'dtable': 'toptal_sales'})
-
-            db_df = self.sqlcontext.read.format('jdbc').options(**options).load()
+            db_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
 
             self.logger.info('MySQL data retrieved // {}'.format(self.etl_id))
 
@@ -197,9 +212,11 @@ class ETL():
             self.logger.error('Error retrieving data from mysql table {} // {}'.format(e, self.etl_id))
 
     def _get_xml_data(self): 
-        #TODO: implement XML data prasing from --> 
-        #   https://github.com/q15928/python-snippets/blob/master/pyspark/parse-xml/xml-parse.py
-        pass
+        file_rdd = self.sqlcontext.read.text('data/reseller_xml/*.xml', wholetext=True).rdd
+        records_rdd = file_rdd.flatMap(parse_xml)
+        df = records_rdd.toDF(my_schema)
+        return df
+
 
     def _get_csv_data(self): 
         return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
@@ -230,12 +247,11 @@ class ETL():
     def _eroneous_data_value_check(self): 
         """Check for erroneous data values in a given dataframe
         """
-
-        #TODO: 1.) check for nan/ null values
-
+        #TODO: 4.) check for nan/ null values
         pass
 
 
-
 etl = ETL()
-df = etl.get() 
+df = etl.get()
+df = etl.run(df)
+etl.put(df)

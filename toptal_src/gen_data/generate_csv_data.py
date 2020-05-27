@@ -6,14 +6,14 @@ import uuid
 import random
 from sqlalchemy import create_engine
 import sys
-from src.gen_data.utils import *
+from utils import *
 
 # instantiate Faker class
 fake = Faker()
 Faker.seed(0)
 
 # specify lenght of dataframe 
-size = 1000
+size = 100
 
 
 # reseller CSV -- assumption here is we are looking back 2 years on daily data for 3 resellers 
@@ -26,6 +26,7 @@ reseller_df['num_tickets'] = reseller_df['total_amount'] % 10
 reseller_df['sales_channel'] = random_channel(size)
 reseller_df['cust_first_name'] = random_names('first_name', size, fake)
 reseller_df['cust_last_name'] = random_names('last_name', size, fake)
+reseller_df['commission_rate'] = .10
 reseller_df['transaction_id'] = [str(uuid.uuid4()) for _ in range(len(reseller_df.index))]
 
 for date in reseller_df['created_date']:
