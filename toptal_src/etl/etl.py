@@ -46,12 +46,14 @@ class ETL():
         
         try: 
         
+            self.logger.info('Begin MySQL data retrieval // {}'.format(self.etl_id))
             db_df = self._get_mysql_data()
             db_df = db_df.withColumn("commission_amount", F.col('total_cost') * F.col('commission_rate'))\
                             .withColumnRenamed('office_location', 'reseller_location')\
                             .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])\
                             .repartition(7)
             
+            self.logger.info('Begin CSV data retrieval // {}'.format(self.etl_id))
             csv_df = self._get_csv_data()
             csv_df = csv_df.withColumnRenamed('total_amount', 'total_cost')\
                             .withColumnRenamed('num_tickets', 'ticket_quantity')\
@@ -60,6 +62,7 @@ class ETL():
                             .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])\
                             .repartition(7)
 
+            self.logger.info('Begin XML data retrieval // {}'.format(self.etl_id))
             xml_df = self._get_xml_data()
             xml_df = xml_df.withColumnRenamed('dateCreated', 'created_date')\
                             .withColumnRenamed('numberOfPurchasedtickets', 'ticket_quantity')\
@@ -100,8 +103,7 @@ class ETL():
 
         try: 
             #TODO: 1.) check for errorneous data values using self._erroneous_data_value_check()
-            #TODO: 2.) restartable if the job fails
-            #TODO: 3.) UPSERT (INSERT / UPDATE) // hash each row in the dataset to then check in future runs if the data exists
+            #TODO: 2.) UPSERT (INSERT / UPDATE) // hash each row in the dataset to then check in future runs if the data exists
             #   in the target data
             
             self.logger.info('Data Processing Complete // {}'.format(self.etl_id))
@@ -199,43 +201,24 @@ class ETL():
 
 
     def _get_mysql_data(self): 
-        self.logger.info('Begin mysql query // {}'.format(self.etl_id))
 
-        try: 
+        jdbc_options = self._inst_jdbc_params()
+        jdbc_options['dbtable'] = 'toptal_sales'
 
-            jdbc_options = self._inst_jdbc_params()
-            jdbc_options['dbtable'] = 'toptal_sales'
+        db_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
 
-            db_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
+        self.logger.info('MySQL data retrieved // {}'.format(self.etl_id))
 
-            self.logger.info('MySQL data retrieved // {}'.format(self.etl_id))
+        return db_df
 
-            return db_df
-
-        except Exception as e: 
-
-            self.logger.error('Error retrieving data from mysql table {} // {}'.format(e, self.etl_id))
 
     def _get_xml_data(self): 
-        self.logger.info('Begin XML data retrieval // {}'.format(self.etl_id))
-        
-        try: 
-            
-            df = self.sqlcontext.read.format("xml").schema(set_schema()).load("data/reseller_xml/*.xml")
-        
-        except Exception as e: 
-            self.logger.info('Error retrieving XML data {} // {}'.format(e, self.etl_id))
-        
+        df = self.sqlcontext.read.format("xml").schema(set_schema()).load("data/reseller_xml/*.xml")
         return df
 
     def _get_csv_data(self): 
-        self.logger.info('Begin CSV data retrieval // {}'.format(self.etl_id))
+        return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
         
-        try: 
-            return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
-        except Exception as e: 
-            self.logger.error('Error retrieving data from CSV files {} // {}'.format(e, self.etl_id))
-
     def _inst_jdbc_params(self):
         """Hidden method for instantiating all the params for MySQL JDBC read operation. 
 
