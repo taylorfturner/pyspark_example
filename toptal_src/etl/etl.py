@@ -57,7 +57,7 @@ class ETL():
                             .withColumnRenamed('num_tickets', 'ticket_quantity')\
                             .withColumnRenamed('office_location', 'reseller_location')\
                             .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))\
-                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])\
+                            .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])\
                             .repartition(7)
 
             xml_df = self._get_xml_data()
@@ -66,7 +66,7 @@ class ETL():
                             .withColumnRenamed('totalAmount', 'total_cost')\
                             .withColumnRenamed('officeLocation', 'reseller_location')\
                             .withColumn('commission_amount', F.col('total_cost') * .10)\
-                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])\
+                            .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])\
                             .repartition(7)
 
             df = db_df.union(csv_df)
@@ -99,7 +99,7 @@ class ETL():
         self.logger.info('Data Processing Start // {}'.format(self.etl_id))
 
         try: 
-            #TODO: 1.) check for errorneous data values using self.__eroneous_data_value_check()
+            #TODO: 1.) check for errorneous data values using self._erroneous_data_value_check()
             #TODO: 2.) restartable if the job fails
             #TODO: 3.) UPSERT (INSERT / UPDATE) // hash each row in the dataset to then check in future runs if the data exists
             #   in the target data
@@ -186,7 +186,7 @@ class ETL():
 
         return logger
 
-    def _read_creds(self, ): 
+    def _read_creds(self): 
         """Retrieve all credentials and parameters required to instantiate 
             the JDBC connection to localhost MySQL database. 
         """
@@ -259,7 +259,7 @@ class ETL():
 
         return options
         
-    def _eroneous_data_value_check(self): 
+    def _erroneous_data_value_check(self): 
         """Check for erroneous data values in a given dataframe
         """
         pass
