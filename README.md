@@ -20,25 +20,15 @@
         
 - Naming convention for 3rd paty vendor software data sources: `DailySales_MMDDYYYY_RESELLER_ID` in `.csv` and `.xml`
 
-## Running the ETL Process 
-```
-etl = ETL()
-df = etl.get() 
-df = etl.run(df)
-etl.put(df)
-```
-
 ## Process Flow 
-- 1.) Create Database + Table Schema 
-- 2.) Populate Tables with Data 
-- 3.) Run ETL Script
-    - Be restartable if the jobs or subjob fails
-    - Support update/insert (UPSERT) execution
-    - Handle erroneous data
-    - Track data processing metadata (when did the load start, break, finish)
+- 1.) Create and populate fake data sources
+- 2.) Populate folders / table with generate data from step 1 
+- 3.) Begin process by reading in the spark cluster all pertinent data and 
+    concatenating all the data into one single dataframe. 
+- 3.) Process the data
 - 4.) Analyze Output
 
-## Setting up Conda Environment 
+## Installation and Setup 
 *Note*: When using VS Code ensure your python interpreter is set to your conda python interpreter 
 for both regular code execution and for debugging purposes. 
 
@@ -47,4 +37,12 @@ Working directory should be the root of this repo when running the following.
 conda create -n toptal python=3.6
 conda activate toptal
 python setup.py install 
+```
+
+## Running the ETL Process 
+```
+etl = ETL()
+df = etl.get() 
+df = etl.run(df)
+etl.put(df)
 ```
