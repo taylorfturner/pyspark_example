@@ -13,7 +13,7 @@ fake = Faker()
 Faker.seed(0)
 
 # specify lenght of dataframe 
-size = 100
+size = 10
 
 # XML reseller dataframe -- https://pymotw.com/2/xml/etree/ElementTree/create.html
 xml_df = pd.DataFrame(columns = ['transaction_id', 'event_name', 'num_tickets', 'total_amount', 'sales_channel', 'cust_first_name', 'cust_last_name', 'office_location', 'created_date'])
@@ -47,7 +47,7 @@ for row in xml_df.iterrows():
     transaction = append_sub_element(transaction, 'officeLocation', row['office_location'])
     transaction = append_sub_element(transaction, 'dateCreated', str(row['created_date']))
     customer = SubElement(transaction, 'customer')
-    customer = append_sub_element(customer, 'first_name', 'joe')
-    customer = append_sub_element(customer, 'last_name', 'nichols')
+    customer = append_sub_element(customer, 'first_name', str(row['cust_first_name']))
+    customer = append_sub_element(customer, 'last_name', str(row['cust_last_name']))
     tree = ElementTree(top)
     tree.write('data/reseller_xml/DailySales_{date}_{reseller_id}.xml'.format(date = row['created_date'], reseller_id = unique_reseller_id))

@@ -9,6 +9,18 @@ import uuid
 import yaml
 import xml.etree.ElementTree as ET
 
+def parse_xml_string(rdd): 
+
+	rec = []
+
+	tree = ET.fromstring(rdd[0])
+
+	for iter_xml in tree.getiterator(): 
+		
+		rec.append(iter_xml.text)
+
+	return rec
+
 class ETL():
 
     def __init__(self):
@@ -48,14 +60,17 @@ class ETL():
         
             db_df = self._get_mysql_data()
             db_df = db_df.withColumn("commission_amount", F.col('total_cost') * F.col('commission_rate'))\
-                            .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])
+                            .withColumnRenamed('office_location', 'reseller_location')\
+                            .select(['transaction_id', 'created_date', 'total_cost', 'ticket_quantity', 'reseller_location', 'commission_amount'])\
+                            .repartition(7)
             
             csv_df = self._get_csv_data()
             csv_df = csv_df.withColumnRenamed('total_amount', 'total_cost')\
                             .withColumnRenamed('num_tickets', 'ticket_quantity')\
                             .withColumnRenamed('office_location', 'reseller_location')\
                             .withColumn('commission_amount', F.col('total_cost') * F.col('commission_rate'))\
-                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])
+                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])\
+                            .repartition(7)
 
             xml_df = self._get_xml_data()
             xml_df = xml_df.withColumnRenamed('dateCreated', 'created_date')\
@@ -63,9 +78,11 @@ class ETL():
                             .withColumnRenamed('totalAmount', 'total_cost')\
                             .withColumnRenamed('officeLocation', 'reseller_location')\
                             .withColumn('commission_amount', F.col('total_cost') * .10)\
-                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])
-    
-            df = db_df.union(csv_df).union(xml_df)
+                            .select(['transaction_id', 'created_date', 'reseller_location', 'total_cost', 'ticket_quantity', 'commission_amount'])\
+                            .repartition(7)
+
+            df = db_df.union(csv_df)
+            new_df = df.union(xml_df)
 
             db_df.unpersist()
             csv_df.unpersist()
@@ -74,11 +91,11 @@ class ETL():
             self.logger.info('Data Collection Complete // {}'.format(self.etl_id))
 
             return df
-        
+            
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
-
-    def run(self, df): 
+            
+    def run(self, df):
         """ 
         Process and join the data as desired. 
 

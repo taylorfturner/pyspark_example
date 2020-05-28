@@ -13,7 +13,7 @@ fake = Faker()
 Faker.seed(0)
 
 # specify lenght of dataframe 
-size = 100
+size = 10
 
 
 # reseller CSV -- assumption here is we are looking back 2 years on daily data for 3 resellers 

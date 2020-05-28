@@ -7,10 +7,8 @@ def parse_xml_string(rdd):
 
 	tree = ET.fromstring(rdd[0])
 
-	for iter_xml in xml_string.getiterator(): 
+	for iter_xml in tree.getiterator(): 
 		
-		print (iter_xml, iter_xml.tag, iter_xml.text)
-
 		rec.append(iter_xml.text)
 
 	return rec
@@ -21,7 +19,7 @@ def set_schema():
     """
     schema_list = []
     
-    for c in ['transaction_id', 'first_name', 'last_name', 'dateCreated', 'officeLocation', 'salesChannel', 'totalAmount', 'numberOfPurchasedTickets', 'eventName', 'date', 'reseller_id']:
+    for c in ['transaction_id', 'cust_first_name', 'cust_last_name', 'dateCreated', 'officeLocation', 'salesChannel', 'totalAmount', 'numberOfPurchasedTickets', 'eventName', 'date', 'reseller_id']:
 
             schema_list.append(StructField(c, StringType(), True))
     

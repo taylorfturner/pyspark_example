@@ -6,14 +6,14 @@ import uuid
 import random
 from sqlalchemy import create_engine
 import sys
-from src.gen_data.utils import *
+from utils import *
 
 # instantiate Faker class
 fake = Faker()
 Faker.seed(0)
 
 # specify lenght of dataframe 
-size = 1000
+size = 10
 
 # populate the dataframe 
 df = pd.DataFrame(columns = ['transaction_id', 'seller', 'customer_first_name', 'customer_last_name', 'total_cost', 'ticket_quantity', 'sales_channel', 'commission_rate'])
@@ -26,7 +26,7 @@ df['customer_last_name'] = random_names('last_name', size, fake)
 df['total_cost'] = np.random.randint(low=10, high = 100, size=size)
 df['ticket_quantity'] = df['total_cost'] / 10 
 df['office_location'] = random_addresses('city', size, fake)
-df['created_date'] = random_dates(size, years_back = '-2y', fake)
+df['created_date'] = random_dates(size, '-2y', fake)
 df = df.apply(lambda x: commission_rate(x), axis = 1)
 
 # write the dataframe to localhost MySQL 
