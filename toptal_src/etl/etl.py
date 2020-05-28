@@ -4,22 +4,10 @@ import os
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql import functions as F
 from sqlalchemy import create_engine
-from utils import xml_schema, parse_xml_string, set_schema
+from utils import xml_schema, set_schema
 import uuid
 import yaml
 import xml.etree.ElementTree as ET
-
-def parse_xml_string(rdd): 
-
-	rec = []
-
-	tree = ET.fromstring(rdd[0])
-
-	for iter_xml in tree.getiterator(): 
-		
-		rec.append(iter_xml.text)
-
-	return rec
 
 class ETL():
 
@@ -82,7 +70,7 @@ class ETL():
                             .repartition(7)
 
             df = db_df.union(csv_df)
-            new_df = df.union(xml_df)
+            df = df.union(xml_df)
 
             db_df.unpersist()
             csv_df.unpersist()
@@ -166,7 +154,7 @@ class ETL():
         try:
             spark_session = SparkSession\
                 .builder\
-                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar")\
+                .config("spark.jars", "C:\spark\jars\*.jar")\
                 .config("spark.serializer", "org.apache.spark.serializer.JavaSerializer")\
                 .getOrCreate()
 
@@ -229,10 +217,15 @@ class ETL():
             self.logger.error('Error retrieving data from mysql table {} // {}'.format(e, self.etl_id))
 
     def _get_xml_data(self): 
-        file_rdd = self.sqlcontext.read.text('data/reseller_xml/*.xml', wholetext=True).rdd
-        records_rdd = file_rdd.flatMap(parse_xml_string)
-        dataframe_schema = set_schema()
-        df = records_rdd.toDF(dataframe_schema)
+        self.logger.info('Begin XML data retrieval // {}'.format(self.etl_id))
+        
+        try: 
+            
+            df = self.sqlcontext.read.format("xml").schema(set_schema()).load("data/reseller_xml/*.xml")
+        
+        except Exception as e: 
+            self.logger.info('Error retrieving XML data {} // {}'.format(e, self.etl_id))
+        
         return df
 
     def _get_csv_data(self): 
@@ -270,9 +263,3 @@ class ETL():
         """Check for erroneous data values in a given dataframe
         """
         pass
-
-
-etl = ETL()
-df = etl.get()
-df = etl.run(df)
-etl.put(df)
