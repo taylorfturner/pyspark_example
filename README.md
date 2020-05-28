@@ -5,7 +5,7 @@
 - `java --version` returns correctly 
     - If Java returns: ```'java' is not recognized as an internal or external command, operable program or batch file.```
     - Install Java [here](https://www.java.com/en/download/)
-- Working in a conda environment. See [Setting Up Conda environment](#setting_up_conda_environment)
+- Working in a conda environment. See [Setting Up Conda environment](#setting-up-conda-environment)
 - Working with dummy data. See `src/gen_data` for script.
 - `mysql-connector-java-5.1.49` is in the root of your `C:\spark\jars\` drive. See [here](https://dev.mysql.com/downloads/connector/j/5.1.html) for download. This is key for the JDBC to pick up the `-bin.jar` file for the MySQL connection. This is also key for reading in `xml` data. *Note*: in the conf setting when instantiating the `spark_sesion`, read in multiple jars by setting the conf value string to `C:\spark\jars\*.jar`.
 - Must specify the location of the `.jar` file in the instantiation of the SparkSession. This is to ensure that the `SQLContext` inherits the necessary configurations for the `MySQL` database connection to `localhost`. See below example: 
