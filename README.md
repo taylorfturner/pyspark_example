@@ -10,9 +10,10 @@
 - `mysql-connector-java-5.1.49` is in the root of your `C:\spark\jars\` drive. See [here](https://dev.mysql.com/downloads/connector/j/5.1.html) for download. This is key for the JDBC to pick up the `-bin.jar` file for the MySQL connection. This is also key for reading in `xml` data. *Note*: in the conf setting when instantiating the `spark_sesion`, read in multiple jars by setting the conf value string to `C:\spark\jars\*.jar`.
 - Must specify the location of the `.jar` file in the instantiation of the SparkSession. This is to ensure that the `SQLContext` inherits the necessary configurations for the `MySQL` database connection to `localhost`. See below example: 
  
-        spark = SparkSession\
+        spark_session = SparkSession\
                 .builder\
-                .config("spark.jars", "C:\spark\jars\mysql-connector-java-5.1.49-bin.jar") \
+                .config("spark.jars", "C:\spark\jars\*.jar")\
+                .config("spark.serializer", "org.apache.spark.serializer.JavaSerializer")\
                 .getOrCreate()
 
         sqlcontext = SQLContext(spark)
