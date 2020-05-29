@@ -1,7 +1,7 @@
 import logging 
 import logging.config
 import os
-from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import SparkSession, SQLContext, DataFrame
 from pyspark.sql import functions as F
 from sqlalchemy import create_engine
 from utils import xml_schema, set_schema
@@ -27,7 +27,7 @@ class ETL():
         try: 
             self.spark_session, self.sqlcontext = self._inst_context()
 
-            self.logger.info('Class instantiation complete // {}'.format(self.etl_id))
+            self.logger.info('ETL Class instantiation complete // {}'.format(self.etl_id))
 
         except Exception as e: 
             self.logger.error('{} // {}'.format(e, self.etl_id))
@@ -42,8 +42,6 @@ class ETL():
         Return: 
             - Final dataframe for writing to disk. 
         """
-        self.logger.info('Begin collecting the data // {}'.format(self.etl_id))
-        
         try: 
         
             self.logger.info('Begin MySQL data retrieval // {}'.format(self.etl_id))
@@ -80,10 +78,13 @@ class ETL():
             xml_df.unpersist()
 
             self.logger.info('Data Collection Complete // {}'.format(self.etl_id))
+            
+            #TODO: ensure the count of the final dataframe is correct 
+            df.count() == 50
 
             return df
             
-        except Exception as e: 
+        except Exception as e:  
             self.logger.error('{} // {}'.format(e, self.etl_id))
             
     def run(self, df):
@@ -133,7 +134,7 @@ class ETL():
 
             self.spark_session.stop()
 
-        except Exception as e: 
+        except Exception as e:  
             self.logger.error('{} // {}'.format(e, self.etl_id))
 
     def _inst_etl_id(self): 
@@ -144,7 +145,7 @@ class ETL():
             self.logger.info('ETL ID Generated // {}'.format(unique_job_id))
         
         except Exception as e:
-            self.logger.error(e)
+            self.logger.error('{} // {}'.format(e, self.etl_id))
 
         return unique_job_id
 
@@ -164,8 +165,7 @@ class ETL():
                                     sparkSession=spark_session)
             self.logger.info('Spark Session Instantiated // {}'.format(self.etl_id))
     
-        except Exception as e: 
-
+        except Exception as e:
             self.logger.error(e)
 
         return spark_session, sqlContext
@@ -205,20 +205,31 @@ class ETL():
         jdbc_options = self._inst_jdbc_params()
         jdbc_options['dbtable'] = 'toptal_sales'
 
-        db_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
+        df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
 
-        self.logger.info('MySQL data retrieved // {}'.format(self.etl_id))
+        self._is_dataframe('MySQL', df)
+        self._is_populated('MySQL', df)
 
-        return db_df
+        return df
 
 
     def _get_xml_data(self): 
+        #TODO: ensure this is reading all the data in
         df = self.sqlcontext.read.format("xml").schema(set_schema()).load("data/reseller_xml/*.xml")
+        
+        self._is_dataframe('xml', df)
+        self._is_populated('xml', df)
+
         return df
 
     def _get_csv_data(self): 
-        return self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
-        
+        df = self.sqlcontext.read.csv('data/reseller_csv/*.csv', header = True)
+
+        self._is_dataframe('csv', df)
+        self._is_populated('csv', df)
+
+        return df
+
     def _inst_jdbc_params(self):
         """Hidden method for instantiating all the params for MySQL JDBC read operation. 
 
@@ -246,3 +257,18 @@ class ETL():
         """Check for erroneous data values in a given dataframe
         """
         pass
+
+    def _is_populated(self, data_type, df): 
+        if df.count() >= 1: 
+            pass
+        else: 
+            self.logger.error('{} DataFrame is not populated // {}'.format(data_type, self.etl_id))
+    
+    def _is_dataframe(self, data_type, df): 
+        if isinstance(df, DataFrame): 
+            self.logger.info('Complete {} data retrieval // {}'.format(data_type, self.etl_id))
+        else:
+            self.logger.info('{} `df` object is not a dataframe // {}'.format(data_type, self.etl_id))
+
+etl = ETL()
+df = etl.get()
