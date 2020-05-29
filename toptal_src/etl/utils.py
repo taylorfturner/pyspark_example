@@ -19,7 +19,7 @@ def set_schema():
     """
     schema_list = []
     
-    for c in ['transaction_id', 'first_name', 'last_name', 'dateCreated', 'officeLocation', 'salesChannel', 'totalAmount', 'numberOfPurchasedTickets', 'eventName', 'date', 'reseller_id']:
+    for c in ['transaction_id', 'cust_first_name', 'cust_last_name', 'dateCreated', 'officeLocation', 'salesChannel', 'totalAmount', 'numberOfPurchasedTickets', 'eventName', 'date', 'reseller_id']:
 
             schema_list.append(StructField(c, StringType(), True))
     

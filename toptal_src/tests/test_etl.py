@@ -14,7 +14,6 @@ class ToptalETLTesting(unittest.TestCase):
             - instnatiation of SparkSession and SQLContext for interacting with spark cluster
                 and with dataframes on spark cluster
         """
-        # instantiate the class
         etl = ETL()
 
         self.assertIsInstance(etl.jdbc_params, dict)
