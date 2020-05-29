@@ -102,11 +102,16 @@ class ETL():
         self.logger.info('Data Processing Start // {}'.format(self.etl_id))
 
         try: 
-            #TODO: 1.) check for errorneous data values using self._erroneous_data_value_check()
-            #TODO: 2.) UPSERT (INSERT / UPDATE) // hash each row in the dataset to then check in future runs if the data exists
-            #   in the target data
+            
+            #check for erroneous data
+            test_df = df.na.drop()
+            test_df.count() == df.count()
+            
+            #TODO: 1.) UPSERT (INSERT / UPDATE)
             
             self.logger.info('Data Processing Complete // {}'.format(self.etl_id))
+
+            test_df.unpersist()
 
             return df
 
@@ -124,6 +129,8 @@ class ETL():
 
             jdbc_params = self._inst_jdbc_params()
             jdbc_params['dbtable'] = 'toptal_final'
+
+            df = df.withColumn('process_date', F.current_date())
 
             df.write.format('jdbc').options(**jdbc_params)\
                 .mode('overwrite')\
@@ -200,7 +207,6 @@ class ETL():
 
 
     def _get_mysql_data(self): 
-
         jdbc_options = self._inst_jdbc_params()
         jdbc_options['dbtable'] = 'toptal_sales'
 
@@ -279,3 +285,5 @@ class ETL():
 
 etl = ETL()
 df = etl.get()
+df = etl.run(df)
+etl.put(df)
