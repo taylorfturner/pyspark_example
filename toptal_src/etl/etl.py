@@ -215,7 +215,10 @@ class ETL():
 
     def _get_xml_data(self): 
         #TODO: ensure this is reading all the data in
-        df = self.sqlcontext.read.format("xml").schema(set_schema()).load("data/reseller_xml/*.xml")
+        df = self.sqlcontext.read.format("xml")\
+                    .schema(set_schema())\
+                    .options(rowTag='transaction')\
+                    .load("data/reseller_xml/*.xml")
         
         self._is_dataframe('xml', df)
         self._is_populated('xml', df)
