@@ -259,11 +259,6 @@ class ETL():
         }
 
         return options
-        
-    def _erroneous_data_value_check(self): 
-        """Check for erroneous data values in a given dataframe
-        """
-        pass
 
     def _is_populated(self, data_type, df): 
         if df.count() >= 1: 
@@ -282,8 +277,3 @@ class ETL():
             pass
         else: 
             self.logger.error('`df.count()` is not correct // {}'.format(self.etl_id))
-
-etl = ETL()
-df = etl.get()
-df = etl.run(df)
-etl.put(df)
