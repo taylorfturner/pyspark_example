@@ -79,8 +79,7 @@ class ETL():
 
             self.logger.info('Data Collection Complete // {}'.format(self.etl_id))
             
-            #TODO: ensure the count of the final dataframe is correct 
-            df.count() == 50
+            self._count_is_equal(df)
 
             return df
             
@@ -214,7 +213,6 @@ class ETL():
 
 
     def _get_xml_data(self): 
-        #TODO: ensure this is reading all the data in
         df = self.sqlcontext.read.format("xml")\
                     .schema(set_schema())\
                     .options(rowTag='transaction')\
@@ -271,7 +269,13 @@ class ETL():
         if isinstance(df, DataFrame): 
             self.logger.info('Complete {} data retrieval // {}'.format(data_type, self.etl_id))
         else:
-            self.logger.info('{} `df` object is not a dataframe // {}'.format(data_type, self.etl_id))
+            self.logger.error('{} `df` object is not a dataframe // {}'.format(data_type, self.etl_id))
+
+    def _count_is_equal(self,df): 
+        if df.count() == 40: 
+            pass
+        else: 
+            self.logger.error('`df.count()` is not correct // {}'.format(self.etl_id))
 
 etl = ETL()
 df = etl.get()
