@@ -103,11 +103,26 @@ class ETL():
 
         try: 
             
-            #check for erroneous data
             test_df = df.na.drop()
             test_df.count() == df.count()
+
+            jdbc_options = self._inst_jdbc_params()
+            jdbc_options['dbtable'] = 'toptal_final'
+
+            target_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
+
+            coalesce_cols = [column for column in target_df.columns if column not in ['transaction_id', 'process_date']]
             
-            #TODO: 1.) UPSERT (INSERT / UPDATE)
+            param_df = df
+            df = df.alias('a').join(
+                    target_df.alias('b'), ['transaction_id'], how='outer'
+                ).select('transaction_id', 
+                    *(F.coalesce('b.' + col, 'a.' + col).alias(col) for col in coalesce_cols)
+                ).distinct()
+
+            insert_row_count = (df - param_df)
+            if insert_row_count > 0: 
+                self.logger.info('Inserting {} new rows in target dataframe // {}'.format(insert_row_count, self.etl_id))
             
             self.logger.info('Data Processing Complete // {}'.format(self.etl_id))
 
@@ -273,7 +288,12 @@ class ETL():
             self.logger.error('{} `df` object is not a dataframe // {}'.format(data_type, self.etl_id))
 
     def _count_is_equal(self,df): 
-        if df.count() == 40: 
+        if df.count() == 40:
             pass
         else: 
             self.logger.error('`df.count()` is not correct // {}'.format(self.etl_id))
+
+etl = ETL()
+df = etl.get()
+df = etl.run(df)
+etl.put(df)
