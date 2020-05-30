@@ -292,8 +292,3 @@ class ETL():
             pass
         else: 
             self.logger.error('`df.count()` is not correct // {}'.format(self.etl_id))
-
-etl = ETL()
-df = etl.get()
-df = etl.run(df)
-etl.put(df)
