@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 with open ('requirements.txt') as f: 
     required = f.read().splitlines()
 
-setup(name='toptal_src',
+setup(name='pyspark_example',
       version='1.0.0',
-      description='Toptal technical challenge -- processing sales data ETL',
+      description='Pyspark technical challenge -- processing sales data ETL',
       author='Taylor F. Turner, IV',
       author_email='taylorfturner@gmail.com',
       license='All Rights Reserved',

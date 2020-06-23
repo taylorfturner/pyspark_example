@@ -9,7 +9,7 @@ data/reseller_xml/*
 src/etl/__*
 src/__*
 *.egg-info*
-toptal_src.egg_info
+pyspark_example.egg_info
 dist*
 build*
 .vscode

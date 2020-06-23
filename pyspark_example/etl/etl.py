@@ -35,7 +35,7 @@ class ETL():
     def get(self): 
         """
         Retrieve all the data from the three data sources. 
-            1.) MySQL localhost database where `toptal_sales` is the table name
+            1.) MySQL localhost database where `sales_data` is the table name
             2.) CSV reseller data 
             3.) XML reseller data
 
@@ -107,7 +107,7 @@ class ETL():
             test_df.count() == df.count()
 
             jdbc_options = self._inst_jdbc_params()
-            jdbc_options['dbtable'] = 'toptal_final'
+            jdbc_options['dbtable'] = 'final_data'
 
             target_df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
 
@@ -143,7 +143,7 @@ class ETL():
             self.logger.info('Begin putting data to disk // {}'.format(self.etl_id))
 
             jdbc_params = self._inst_jdbc_params()
-            jdbc_params['dbtable'] = 'toptal_final'
+            jdbc_params['dbtable'] = 'final_data'
 
             df = df.withColumn('process_date', F.current_date())
 
@@ -223,7 +223,7 @@ class ETL():
 
     def _get_mysql_data(self): 
         jdbc_options = self._inst_jdbc_params()
-        jdbc_options['dbtable'] = 'toptal_sales'
+        jdbc_options['dbtable'] = 'sales_data'
 
         df = self.sqlcontext.read.format('jdbc').options(**jdbc_options).load()
 

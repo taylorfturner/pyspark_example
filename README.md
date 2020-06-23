@@ -34,8 +34,8 @@ for both regular code execution and for debugging purposes.
 
 Working directory should be the root of this repo when running the following. 
 ```
-conda create -n toptal python=3.6
-conda activate toptal
+conda create -n pyspark_interview python=3.6
+conda activate pyspark_interview
 python setup.py install 
 ```
 

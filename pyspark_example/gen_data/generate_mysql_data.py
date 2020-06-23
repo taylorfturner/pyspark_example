@@ -31,4 +31,4 @@ df = df.apply(lambda x: commission_rate(x), axis = 1)
 
 # write the dataframe to localhost MySQL 
 db_con = create_engine('mysql+pymysql://root:Texas!234@localhost/hqc')
-df.to_sql(name = 'toptal_sales', con = db_con, if_exists = 'replace', index=False)
+df.to_sql(name = 'sales_data', con = db_con, if_exists = 'replace', index=False)

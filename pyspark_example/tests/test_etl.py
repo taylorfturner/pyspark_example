@@ -1,7 +1,7 @@
 import unittest
-from toptal_src.etl import ETL 
+from pyspark_example.etl import ETL 
 
-class ToptalETLTesting(unittest.TestCase):
+class PysparkETLTesting(unittest.TestCase):
 
     def test_instantiation(self): 
         """Testing instantiation of the ETL class. 
